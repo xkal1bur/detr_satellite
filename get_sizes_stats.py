@@ -3,7 +3,7 @@ import torch
 from torchvision.io import read_image
 import numpy as np
 
-img_dir = 'data/target'
+img_dir = 'data/target' # Evaluation :v
 img_files = sorted(os.listdir(img_dir))
 
 heights = []

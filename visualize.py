@@ -21,11 +21,11 @@ def plot_image_with_boxes(image_tensor, boxes, labels, font_size=12, box_color='
     ax.imshow(image)
     
     for i, (box, label) in enumerate(zip(boxes, labels)):
-        x1, y1, x2, y2 = box[:4]
-        rect = Rectangle((x1, y1), x2 - x1, y2 - y1, linewidth=2, edgecolor=box_color, facecolor='none')
-        ax.add_patch(rect)
-        
-        ax.text(x1, y1, f'{label[0]}', fontsize=font_size, color=label_color, bbox=dict(facecolor='red', alpha=0.5))
+        x_coords = [box[0], box[2], box[4], box[6], box[0]]
+        y_coords = [box[1], box[3], box[5], box[7], box[1]]
+        ax.plot(x_coords, y_coords, linewidth=2, color=box_color)
+        ax.text(box[0], box[1], f'{label[0]}', fontsize=font_size, color=label_color,
+                bbox=dict(facecolor='red', alpha=0.5))
 
     plt.show()
 

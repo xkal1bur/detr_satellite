@@ -12,15 +12,15 @@ from torchvision.transforms import v2
 # I/O
 out_dir = "out"
 init_from = 'scratch'                 # 'scratch' | 'resume' | 'detr-resnet50'
-eval_interval = 2000
-log_interval = 1
-eval_iters = 200
+eval_interval = 2000  # cada cuantos intervalos se evalua
+log_interval = 1 # cada cuantos intervalos haremos logs :v
+eval_iters = 200 # iteraciones de eval
 
 # Datos
 data_dir = "data"
 train_dir = os.path.join(data_dir, "train")
 val_dir   = os.path.join(data_dir, "val")
-num_workers = 2
+num_workers = 2 # para el data loader
 batch_size = 12                       # if gradient_accumulation_steps > 1, este es micro-batch size
 gradient_accumulation_steps = 5 * 8   # para simular batch más grande 
 
@@ -34,7 +34,7 @@ embed_dim      = 256                  # x8 in feedforward
 n_heads        = 8
 enc_layers     = 6
 dec_layers     = 6
-dropout        = 0.1
+dropout        = 0.1 # arbitrario señor :v
 
 # losses & bipartite matching
 set_cost_class = 1                    # peso coste clasificación 
@@ -129,6 +129,8 @@ class SatellitalDataset(Dataset):
             image = self.transform(image)
         if self.target_transform:
             boxes = self.target_transform(boxes)
+            
+        boxes = [box.tolist() for box in boxes]
         return image, boxes, label
     
     def _read_annot(self, annot_path):
@@ -157,7 +159,7 @@ train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True)
 img, boxes, labels  = next(iter(train_loader))
 
 from visualize import plot_image_with_boxes
-plot_image_with_boxes(img[0], boxes[0], labels)
+plot_image_with_boxes(img[0], boxes, labels)
 
 
 
