@@ -105,7 +105,10 @@ ctx = nullcontext() if device_type == 'cpu' else torch.amp.autocast(device_type=
 # -----------------------------------------------------------------------------
 # DataLoader 
 transform = v2.Compose([
-    v2.ToImage()
+    v2.ToImage(),
+    v2.ToDtype(torch.float32),
+    v2.Resize((1850, 1850), antialias=True, interpolation=v2.InterpolationMode.BICUBIC),
+    v2.Normalize(mean=[0.3428944945335388, 0.34861984848976135, 0.31862562894821167], std=[0.1603400707244873, 0.15214884281158447, 0.14776213467121124])
 ])
 
 import numpy as np
