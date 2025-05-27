@@ -12,15 +12,15 @@ from torchvision.transforms import v2
 # I/O
 out_dir = "out"
 init_from = 'scratch'                 # 'scratch' | 'resume' | 'detr-resnet50'
-eval_interval = 2000
-log_interval = 1
-eval_iters = 200
+eval_interval = 2000  # cada cuantos intervalos se evalua
+log_interval = 1 # cada cuantos intervalos haremos logs :v
+eval_iters = 200 # iteraciones de eval
 
 # Datos
 data_dir = "data"
 train_dir = os.path.join(data_dir, "train")
 val_dir   = os.path.join(data_dir, "val")
-num_workers = 2
+num_workers = 2 # para el data loader
 batch_size = 12                       # if gradient_accumulation_steps > 1, este es micro-batch size
 gradient_accumulation_steps = 5 * 8   # para simular batch más grande 
 
@@ -34,7 +34,7 @@ embed_dim      = 256                  # x8 in feedforward
 n_heads        = 8
 enc_layers     = 6
 dec_layers     = 6
-dropout        = 0.1
+dropout        = 0.1 # arbitrario señor :v
 
 # losses & bipartite matching
 set_cost_class = 1                    # peso coste clasificación 
@@ -104,7 +104,6 @@ ctx = nullcontext() if device_type == 'cpu' else torch.amp.autocast(device_type=
 
 # -----------------------------------------------------------------------------
 # DataLoader 
-
 class BoxScaler:
     def __init__(self, target_size):
         self.target_size = target_size
@@ -146,7 +145,7 @@ class SatellitalDataset(Dataset):
         if self.transform:
             image = self.transform(image)
 
-        boxes, labels, incognite_value ,gsd = self._read_annot(os.path.join(self.annot_dir, self.img_names[idx].replace("png", "txt")))
+        boxes, labels, incognite_value, gsd = self._read_annot(os.path.join(self.annot_dir, self.img_names[idx].replace("png", "txt")))
         if self.target_transform:
             boxes = self.target_transform((boxes, original_size))
 
@@ -203,11 +202,11 @@ train_loader = DataLoader(
     collate_fn=collate_fn
 )
 
-img, boxes, labels  = next(iter(train_loader))
+img, boxes, labels = next(iter(train_loader))
 
 from visualize import plot_image_with_boxes, unnormalize_image
-img_to_plot = unnormalize_image(img[1], mean=means, std=stds)
-plot_image_with_boxes(img_to_plot, boxes[1], labels[1])
+img_to_plot = unnormalize_image(img[0], mean=means, std=stds)
+plot_image_with_boxes(img_to_plot, boxes[0], labels[0])
 
 
 

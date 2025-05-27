@@ -2,6 +2,8 @@ import torch
 import torchvision.io as io
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
+import os
+import random
 
 def unnormalize_image(image_tensor, mean, std):
     """
@@ -49,8 +51,8 @@ def plot_image_with_boxes(image_tensor, boxes, labels, font_size=12, box_color='
     ax.imshow(image)
     
     for i, (box, label) in enumerate(zip(boxes, labels)):
-        x_coords = [box[0], box[2], box[4], box[6], box[0]]  # Uses all 8 coordinates
-        y_coords = [box[1], box[3], box[5], box[7], box[1]]  # as polygon points
+        x_coords = [box[0], box[2], box[4], box[6], box[0]]
+        y_coords = [box[1], box[3], box[5], box[7], box[1]]
         ax.plot(x_coords, y_coords, linewidth=2, color=box_color)
         ax.text(box[0], box[1], f'{label[0]}', fontsize=font_size, color=label_color,
                 bbox=dict(facecolor='red', alpha=0.5))
@@ -58,10 +60,10 @@ def plot_image_with_boxes(image_tensor, boxes, labels, font_size=12, box_color='
     plt.show()
 
 if __name__ == "__main__":
-    image_path = "./data/train/P0212.png"
+    image_path = "./data/train/P1207.png"
     image_tensor = io.read_image(image_path)
 
-    labels_path = "./data/train_labs/P0212.txt"
+    labels_path = "./data/train_labs/P1207.txt"
     with open(labels_path, 'r') as f:
         next(f)
         gsd_raw = next(f)
