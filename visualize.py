@@ -2,6 +2,8 @@ import torch
 import torchvision.io as io
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
+import os
+import random
 
 def plot_image_with_boxes(image_tensor, boxes, labels, font_size=12, box_color='red', label_color='white'):
     """
@@ -30,11 +32,25 @@ def plot_image_with_boxes(image_tensor, boxes, labels, font_size=12, box_color='
     plt.show()
 
 if __name__ == "__main__":
-    image_path = "./data/train/P0212.png"
+    train_dir = "./data/train"
+    train_labs_dir = "./data/train_labs"
+
+    # Get all .png files in train directory
+    img_files = [f for f in os.listdir(train_dir) if f.endswith(".png")]
+    if not img_files:
+        raise FileNotFoundError("No .png files found in train directory.")
+
+    # Pick a random image
+    img_name = random.choice(img_files)
+    image_path = os.path.join(train_dir, img_name)
+    label_path = os.path.join(train_labs_dir, img_name.replace(".png", ".txt"))
+
+    if not os.path.exists(label_path):
+        raise FileNotFoundError(f"Label file {label_path} not found.")
+
     image_tensor = io.read_image(image_path)
 
-    labels_path = "./data/train_labs/P0212.txt"
-    with open(labels_path, 'r') as f:
+    with open(label_path, 'r') as f:
         next(f)
         gsd_raw = next(f)
         gsd = float(gsd_raw.split(':')[1].strip())
