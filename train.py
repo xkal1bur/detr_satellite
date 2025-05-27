@@ -42,7 +42,7 @@ set_cost_bbox  = 5                    # peso coste bbox en matching
 set_cost_giou  = 2                    # peso coste giou en matching 
 bbox_loss_coef = 5                    # coef de loss L1 bbox 
 giou_loss_coef = 2                    # coef de loss giou 
-eos_coef       = 0.1                  # peso para clase “no object” 
+eos_coef       = 0.1                  # peso para clase "no object" 
 aux_loss       = True                 # usar pérdidas auxiliares en cada capa 
 remove_difficult = False              # ignorar anotaciones difíciles 
 
@@ -104,12 +104,24 @@ ctx = nullcontext() if device_type == 'cpu' else torch.amp.autocast(device_type=
 
 # -----------------------------------------------------------------------------
 # DataLoader 
-transform = v2.Compose([
-    v2.ToImage(),
-    v2.ToDtype(torch.float32),
-    v2.Resize((1850, 1850), antialias=True, interpolation=v2.InterpolationMode.BICUBIC),
-    v2.Normalize(mean=[0.3428944945335388, 0.34861984848976135, 0.31862562894821167], std=[0.1603400707244873, 0.15214884281158447, 0.14776213467121124])
-])
+
+class BoxScaler:
+    def __init__(self, target_size):
+        self.target_size = target_size
+    
+    def __call__(self, data):
+        boxes, original_size = data
+        h_scale = self.target_size[0] / original_size[0]
+        w_scale = self.target_size[1] / original_size[1]
+
+        scaled_boxes = []
+        for box in boxes:
+            scaled_box = []
+            for i, coord in enumerate(box):
+                scale = w_scale if i % 2 == 0 else h_scale
+                scaled_box.append(coord * scale)
+            scaled_boxes.append(scaled_box)
+        return scaled_boxes
 
 import numpy as np
 #wrap_dataset_for_transforms_v2()
@@ -125,14 +137,20 @@ class SatellitalDataset(Dataset):
         return len(self.img_names)
     
     def __getitem__(self, idx):
-        image = read_image(f"{self.img_dir}{self.img_names[idx]}")
+        image = read_image(os.path.join(self.img_dir, self.img_names[idx]))
+        original_size = (image.shape[1], image.shape[2])
 
-        boxes, label, incognite_value ,gsd = self._read_annot(f"{self.annot_dir}{self.img_names[idx].replace("png","txt")}")
+        if image.shape[0] == 1:
+            image = image.repeat(3, 1, 1)
+
         if self.transform:
             image = self.transform(image)
+
+        boxes, labels, incognite_value ,gsd = self._read_annot(os.path.join(self.annot_dir, self.img_names[idx].replace("png", "txt")))
         if self.target_transform:
-            boxes = self.target_transform(boxes)
-        return image, boxes, label
+            boxes = self.target_transform((boxes, original_size))
+
+        return image, boxes, labels
     
     def _read_annot(self, annot_path):
         with open(annot_path, 'r') as f:
@@ -154,13 +172,42 @@ class SatellitalDataset(Dataset):
             incognite.append(incg)
         return boxes, labels, incognite, gsd
         
+def collate_fn(batch):
+    images, boxes, labels = zip(*batch)
+    images = torch.stack(images, dim=0)
+    return images, boxes, labels
 
-train_dataset = SatellitalDataset("data/train/", "data/train_labs/")
-train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True)
+means = torch.tensor([0.3428944945335388, 0.34861984848976135, 0.31862562894821167])
+stds = torch.tensor([0.1603400707244873, 0.15214884281158447, 0.14776213467121124])
+
+image_transform = v2.Compose([
+    v2.ToImage(),
+    v2.ToDtype(torch.float32, scale=True),
+    v2.Resize((1850, 1850), antialias=True, interpolation=v2.InterpolationMode.BICUBIC),
+    v2.Normalize(mean=means, std=stds)
+])
+
+target_transform = BoxScaler(target_size=(1850, 1850))
+
+train_dataset = SatellitalDataset(
+    img_dir=train_dir,
+    annot_dir=os.path.join(data_dir, "train_labs"),
+    transform=image_transform,
+    target_transform=target_transform
+)
+train_loader = DataLoader(
+    train_dataset,
+    batch_size=batch_size,
+    shuffle=True,
+    num_workers=num_workers,
+    collate_fn=collate_fn
+)
+
 img, boxes, labels  = next(iter(train_loader))
 
-from visualize import plot_image_with_boxes
-plot_image_with_boxes(img[0], boxes[0], labels)
+from visualize import plot_image_with_boxes, unnormalize_image
+img_to_plot = unnormalize_image(img[1], mean=means, std=stds)
+plot_image_with_boxes(img_to_plot, boxes[1], labels[1])
 
 
 

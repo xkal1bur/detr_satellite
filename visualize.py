@@ -3,6 +3,27 @@ import torchvision.io as io
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
+def unnormalize_image(image_tensor, mean, std):
+    """
+    Reverses the normalization applied to the image during training.
+    
+    Args:
+    - image_tensor: Normalized image tensor in format [C, H, W]
+    - mean: List of mean values for each channel (default: dataset means)
+    - std: List of standard deviation values for each channel (default: dataset stds)
+    
+    Returns:
+    - Unnormalized image tensor in format [C, H, W] with values in range [0, 1]
+    """
+    mean = torch.tensor(mean).view(-1, 1, 1)
+    std = torch.tensor(std).view(-1, 1, 1)
+    
+    # Reverse normalization: (x - mean) / std -> x * std + mean
+    unnormalized = image_tensor * std + mean
+    
+    # Clip values to ensure they're in [0, 1] range
+    return torch.clamp(unnormalized, 0, 1)
+
 def plot_image_with_boxes(image_tensor, boxes, labels, font_size=12, box_color='red', label_color='white'):
     """
     Dibuja una imagen con sus cajas delimitadoras y etiquetas sobre ella.
