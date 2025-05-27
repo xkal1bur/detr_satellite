@@ -9,14 +9,21 @@ def unnormalize_image(image_tensor, mean, std):
     
     Args:
     - image_tensor: Normalized image tensor in format [C, H, W]
-    - mean: List of mean values for each channel (default: dataset means)
-    - std: List of standard deviation values for each channel (default: dataset stds)
+    - mean: Tensor or list of mean values for each channel
+    - std: Tensor or list of standard deviation values for each channel
     
     Returns:
     - Unnormalized image tensor in format [C, H, W] with values in range [0, 1]
     """
-    mean = torch.tensor(mean).view(-1, 1, 1)
-    std = torch.tensor(std).view(-1, 1, 1)
+    # Convert inputs to tensors if they aren't already
+    if not isinstance(mean, torch.Tensor):
+        mean = torch.tensor(mean)
+    if not isinstance(std, torch.Tensor):
+        std = torch.tensor(std)
+    
+    # Ensure correct shape and detach from computation graph
+    mean = mean.clone().detach().view(-1, 1, 1)
+    std = std.clone().detach().view(-1, 1, 1)
     
     # Reverse normalization: (x - mean) / std -> x * std + mean
     unnormalized = image_tensor * std + mean
@@ -42,11 +49,11 @@ def plot_image_with_boxes(image_tensor, boxes, labels, font_size=12, box_color='
     ax.imshow(image)
     
     for i, (box, label) in enumerate(zip(boxes, labels)):
-        x1, y1, x2, y2 = box[:4]
-        rect = Rectangle((x1, y1), x2 - x1, y2 - y1, linewidth=2, edgecolor=box_color, facecolor='none')
-        ax.add_patch(rect)
-        
-        ax.text(x1, y1, f'{label[0]}', fontsize=font_size, color=label_color, bbox=dict(facecolor='red', alpha=0.5))
+        x_coords = [box[0], box[2], box[4], box[6], box[0]]  # Uses all 8 coordinates
+        y_coords = [box[1], box[3], box[5], box[7], box[1]]  # as polygon points
+        ax.plot(x_coords, y_coords, linewidth=2, color=box_color)
+        ax.text(box[0], box[1], f'{label[0]}', fontsize=font_size, color=label_color,
+                bbox=dict(facecolor='red', alpha=0.5))
 
     plt.show()
 
