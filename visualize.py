@@ -30,7 +30,7 @@ def plot_image_with_boxes(image_tensor, boxes, labels, font_size=12, box_color='
                 bbox=dict(facecolor='red', alpha=0.5))
 
     plt.show()
-
+"""
 if __name__ == "__main__":
     train_dir = "./data/train"
     train_labs_dir = "./data/train_labs"
@@ -51,6 +51,31 @@ if __name__ == "__main__":
     image_tensor = io.read_image(image_path)
 
     with open(label_path, 'r') as f:
+        next(f)
+        gsd_raw = next(f)
+        gsd = float(gsd_raw.split(':')[1].strip())
+        lines = f.readlines()
+
+    boxes = []
+    labels = []
+    for line in lines:
+        parts = line.split()
+        coords = list(map(float, parts[:8]))
+        label = parts[8]
+        incognite = int(parts[9])
+        boxes.append(coords)
+        labels.append((label, incognite))
+
+    plot_image_with_boxes(image_tensor, boxes, labels)"""
+
+
+
+if __name__ == "__main__":
+    image_path = "./data/train/P1207.png"
+    image_tensor = io.read_image(image_path)
+
+    labels_path = "./data/train_labs/P1207.txt"
+    with open(labels_path, 'r') as f:
         next(f)
         gsd_raw = next(f)
         gsd = float(gsd_raw.split(':')[1].strip())
