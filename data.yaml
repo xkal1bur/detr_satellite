@@ -1,0 +1,12 @@
+path: data2
+
+train: train
+val: val
+
+nc: 16
+names: [
+  'small-vehicle', 'ship', 'large-vehicle', 'plane', 'harbor', 'storage-tank',
+  'tennis-court', 'swimming-pool', 'bridge', 'helicopter', 'basketball-court',
+  'roundabout', 'baseball-diamond', 'soccer-ball-field', 'ground-track-field',
+  'container-crane'
+]
