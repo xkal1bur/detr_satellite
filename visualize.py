@@ -60,10 +60,10 @@ def plot_image_with_boxes(image_tensor, boxes, labels, font_size=12, box_color='
     plt.show()
 
 if __name__ == "__main__":
-    image_path = "./data/train/P1207.png"
+    image_path = "./data/val/P2690.png"
     image_tensor = io.read_image(image_path)
 
-    labels_path = "./data/train_labs/P1207.txt"
+    labels_path = "./data/val_labs/P2690.txt"
     with open(labels_path, 'r') as f:
         next(f)
         gsd_raw = next(f)

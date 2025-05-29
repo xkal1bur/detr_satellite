@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 from torch import nn
-from matcher import box_cxcywh_to_xyxy, generalized_box_iou
+#from matcher import box_cxcywh_to_xyxy, generalized_box_iou
 
 class DETRLoss(nn.Module):
     """
@@ -39,22 +39,23 @@ class DETRLoss(nn.Module):
         return losses
 
     def loss_boxes(self, outputs, targets, indices, num_boxes):
-        """Compute the losses related to the bounding boxes, the L1 regression loss and the GIoU loss
-        targets dicts must contain the key "boxes" containing a tensor of dim [nb_target_boxes, 4]
+        """Compute the losses related to the polygons (L1 regression loss).
+        targets dicts must contain the key "boxes" containing a tensor of dim [nb_target_boxes, 8]
         """
         assert 'pred_boxes' in outputs
         idx = self._get_src_permutation_idx(indices)
-        src_boxes = outputs['pred_boxes'][idx]
-        target_boxes = torch.cat([t['boxes'][i] for t, (_, i) in zip(targets, indices)], dim=0)
+        src_boxes = outputs['pred_boxes'][idx]  # [total_matched, 8]
+        target_boxes = torch.cat([t['boxes'][i] for t, (_, i) in zip(targets, indices)], dim=0)  # [total_matched, 8]
 
+        # L1 loss between polygons (sum of abs diff of vertices)
         loss_bbox = F.l1_loss(src_boxes, target_boxes, reduction='none')
         losses = {}
         losses['loss_bbox'] = loss_bbox.sum() / num_boxes
 
-        loss_giou = 1 - torch.diag(generalized_box_iou(
-            box_cxcywh_to_xyxy(src_boxes),
-            box_cxcywh_to_xyxy(target_boxes)))
-        losses['loss_giou'] = loss_giou.sum() / num_boxes
+        # Si quieres IoU de polígonos, implementa aquí (opcional)
+        # loss_giou = 1 - polygon_iou(src_boxes, target_boxes)
+        # losses['loss_giou'] = loss_giou.sum() / num_boxes
+
         return losses
 
     def loss_cardinality(self, outputs, targets, indices, num_boxes):

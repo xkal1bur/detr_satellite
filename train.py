@@ -34,7 +34,7 @@ batch_size = 1 #12                       # if gradient_accumulation_steps > 1, e
 gradient_accumulation_steps = 5 * 8   # para simular batch más grande 
 
 # model
-n_classes   = 16 + 1                   # clases + fondo
+n_classes   = 16                   # clases + fondo
 num_queries = 100
 backbone    = 'resnet50'
 
@@ -313,11 +313,11 @@ def train_one_epoch(model, criterion, data_loader, optimizer, device, epoch, max
             #box_tensor = torch.tensor(box_list, dtype=torch.float32)
             # Convert boxes to tensor and normalize if needed
             if len(box_list) == 0:
-                box_tensor = torch.zeros((0, 4), dtype=torch.float32)
+                box_tensor = torch.zeros((0, 8), dtype=torch.float32)
             else:
-                box_tensor = torch.tensor([polygon_to_bbox(box) for box in box_list], dtype=torch.float32)
+                box_tensor = torch.tensor(box_list, dtype=torch.float32)
                 if box_tensor.ndim == 1:
-                    box_tensor = box_tensor.unsqueeze(0)  # shape [1, 4] si solo hay una caja
+                    box_tensor = box_tensor.unsqueeze(0)  # shape [1, 8] si solo hay una caja
             # Create target dict
             target = {
                 'boxes': box_tensor.to(device),

@@ -70,7 +70,7 @@ class DETRdemo(nn.Module):
         # prediction heads, one extra class for predicting non-empty slots
         # note that in baseline DETR linear_bbox layer is 3-layer MLP
         self.linear_class = nn.Linear(hidden_dim, num_classes + 1)  # +1 for background
-        self.linear_bbox = nn.Linear(hidden_dim, 4)
+        self.linear_bbox = nn.Linear(hidden_dim, 8)
 
         # output positional encodings (object queries)
         self.query_pos = nn.Parameter(torch.rand(100, hidden_dim))
@@ -127,12 +127,12 @@ class DETRdemo(nn.Module):
         
         # finally project transformer outputs to class labels and bounding boxes
         return {'pred_logits': self.linear_class(h), 
-                'pred_boxes': self.linear_bbox(h).sigmoid()}
+                'pred_boxes': self.linear_bbox(h).sigmoid()} # si no esta normalziada, no usar sigmoid
 
 def modify_classifier_weights(state_dict, num_classes=16):
     """
     Modifica los pesos del clasificador y los positional embeddings para manejar el nuevo número de clases
-    y el nuevo tamaño de embeddings.
+    y el nuevo tamaño de embeddings. Además adapta la capa linear_bbox para polígonos (8 puntos).
     """
     # Modificar los pesos del clasificador
     orig_weight = state_dict['linear_class.weight']
@@ -161,7 +161,25 @@ def modify_classifier_weights(state_dict, num_classes=16):
     # Actualizar el state dict para el clasificador
     state_dict['linear_class.weight'] = new_weight
     state_dict['linear_class.bias'] = new_bias
-    
+
+    # Adaptar linear_bbox para 8 puntos (polígono)
+    orig_bbox_weight = state_dict['linear_bbox.weight']
+    orig_bbox_bias = state_dict['linear_bbox.bias']
+
+    new_bbox_weight = torch.zeros((8, orig_bbox_weight.size(1)), dtype=orig_bbox_weight.dtype)
+    new_bbox_bias = torch.zeros(8, dtype=orig_bbox_bias.dtype)
+
+    # Copia los 4 primeros (cx, cy, w, h) en los primeros 4
+    new_bbox_weight[:4] = orig_bbox_weight
+    new_bbox_bias[:4] = orig_bbox_bias
+
+    # Inicializa los 4 nuevos (para los otros vértices del polígono)
+    nn.init.xavier_uniform_(new_bbox_weight[4:])
+    nn.init.zeros_(new_bbox_bias[4:])
+
+    state_dict['linear_bbox.weight'] = new_bbox_weight
+    state_dict['linear_bbox.bias'] = new_bbox_bias
+
     # Redimensionar los positional embeddings
     for key in ['row_embed', 'col_embed']:
         if key in state_dict:
@@ -217,6 +235,13 @@ def rescale_bboxes(out_bbox, size):
     b = b * torch.tensor([img_w, img_h, img_w, img_h], dtype=torch.float32)
     return b
 
+def rescale_polygons(out_polygons, size):
+    """Convierte polígonos normalizados [0,1] a escala de imagen"""
+    img_w, img_h = size
+    scale = torch.tensor([img_w, img_h] * 4, dtype=torch.float32)
+    return out_polygons * scale
+
+
 def detect(im, model, transform):
     # mean-std normalize the input image (batch-size: 1)
     img = transform(im).unsqueeze(0)
@@ -234,7 +259,9 @@ def detect(im, model, transform):
     keep = probas.max(-1).values > 0.7
 
     # convert boxes from [0; 1] to image scales
-    bboxes_scaled = rescale_bboxes(outputs['pred_boxes'][0, keep], im.size)
+    #bboxes_scaled = rescale_bboxes(outputs['pred_boxes'][0, keep], im.size)
+    bboxes_scaled = rescale_polygons(outputs['pred_boxes'][0, keep], im.size)
+
     return probas[keep], bboxes_scaled
 
 url = 'http://images.cocodataset.org/val2017/000000039769.jpg'
@@ -263,14 +290,16 @@ def plot_results(pil_img, prob, boxes):
     plt.figure(figsize=(16,10))
     plt.imshow(pil_img)
     ax = plt.gca()
-    for p, (xmin, ymin, xmax, ymax), c in zip(prob, boxes.tolist(), COLORS * 100):
-        ax.add_patch(plt.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin,
-                                   fill=False, color=c, linewidth=3))
+    for p, poly, c in zip(prob, boxes.tolist(), COLORS * 100):
+        xys = [(poly[i], poly[i+1]) for i in range(0, 8, 2)]
+        xys.append(xys[0])  # cerrar el polígono
+        xs, ys = zip(*xys)
+        ax.plot(xs, ys, color=c, linewidth=2)
         cl = p.argmax()
         text = f'{CLASSES[cl]}: {p[cl]:0.2f}'
-        #text = f'{CLASSES_MY_DATASET[cl]}: {p[cl]:0.2f}'
-        ax.text(xmin, ymin, text, fontsize=15,
-                bbox=dict(facecolor='yellow', alpha=0.5))
+        ax.text(poly[0], poly[1], text, fontsize=12,
+            bbox=dict(facecolor='yellow', alpha=0.5))
+
     plt.axis('off')
     plt.show()
     
@@ -285,7 +314,7 @@ def create_model(num_classes=16, pretrained=True):
     Returns:
         model (DETRdemo): The initialized model
     """
-    model = DETRdemo(num_classes=num_classes+1)
+    model = DETRdemo(num_classes=num_classes) # no sumar 1 acá
     
     if pretrained:
         state_dict = torch.hub.load_state_dict_from_url(
