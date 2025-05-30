@@ -4,7 +4,8 @@ import cv2
 
 # === CONFIGURACIÓN ===
 img_dir = "data2/test/images"
-label_dir = "runs/predict_target/target_infer_0.1/labels"
+#label_dir = "runs_/predict_target_poly/target_infer/labels"
+label_dir = "labels_1024"
 output_obb_csv = "submission.csv"
 
 class_names = [
@@ -25,7 +26,7 @@ for image_id in all_ids:
 
     img = cv2.imread(image_path)
     if img is None or not os.path.exists(label_path):
-        rows_obb.append({"Id": image_id, "Predicted": ""})
+        rows_obb.append({"Id": image_id, "Predicted": " "})
         continue
 
     h, w = img.shape[:2]

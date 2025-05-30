@@ -3,15 +3,24 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import os
-
+import random
 # Configura tu path de imagen
-image_path = "data2/val/images/P0013.png"
-#image_path = "data/target/P2802.png"
+#image_path = "data2/val/images/P0003.png"
+
+## Fixear P1210, P1212, P1619 y P1750
+
+### explorar toda la carpeta data/target/*.png y mostrar uno aleatorio
+image_path = random.choice([
+    os.path.join("data/target", f)
+    for f in os.listdir("data/target") if f.endswith('.png')
+])
+#image_path = "data/target/P1750.png"
 image_id = os.path.splitext(os.path.basename(image_path))[0]  # "P0029"
 
 # Cargar CSV con predicciones
-df = pd.read_csv("submission_obb.csv")
+#df = pd.read_csv("submission_obb.csv")
 #df = pd.read_csv("submission.csv")
+df = pd.read_csv("submission.csv")
 
 # Buscar la fila correspondiente
 row = df[df['Id'] == image_id]
