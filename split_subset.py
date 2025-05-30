@@ -29,7 +29,7 @@ tamano_val = int(num_files_ * 0.2)
 # Subsets
 copy_subset(
     img_src_dir='data/train',
-    label_src_dir='data2/train/labels_complete',
+    label_src_dir='data2/train/labels_complete_poly',
     img_dst_dir='data2/train/images',
     label_dst_dir='data2/train/labels',
     num_files=num_files_
@@ -37,7 +37,7 @@ copy_subset(
 
 copy_subset(
     img_src_dir='data/val',
-    label_src_dir='data2/val/labels_complete',
+    label_src_dir='data2/val/labels_complete_poly',
     img_dst_dir='data2/val/images',
     label_dst_dir='data2/val/labels',
     num_files=tamano_val

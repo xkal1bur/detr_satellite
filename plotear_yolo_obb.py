@@ -5,13 +5,13 @@ import pandas as pd
 import os
 
 # Configura tu path de imagen
-#image_path = "data2/val/images/P0018.png"
-image_path = "data/target/P0003.png"
+image_path = "data2/val/images/P0013.png"
+#image_path = "data/target/P2802.png"
 image_id = os.path.splitext(os.path.basename(image_path))[0]  # "P0029"
 
 # Cargar CSV con predicciones
-#df = pd.read_csv("submission_obb.csv")
-df = pd.read_csv("submission_target_obb.csv")
+df = pd.read_csv("submission_obb.csv")
+#df = pd.read_csv("submission.csv")
 
 # Buscar la fila correspondiente
 row = df[df['Id'] == image_id]
@@ -39,7 +39,7 @@ for det in detections:
     parts = det.split()
     label = parts[0]
     conf = float(parts[1])
-    coords = list(map(int, parts[2:]))
+    coords = list(map(float, parts[2:]))
 
     # Agrupar coordenadas por pares (x, y)
     points = np.array(coords, dtype=np.int32).reshape((4, 2))
