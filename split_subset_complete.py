@@ -27,7 +27,7 @@ def copy_all(img_src_dir, label_src_dir, img_dst_dir, label_dst_dir):
 # Train completo
 copy_all(
     img_src_dir='data/train',
-    label_src_dir='data2/train/labels_complete',
+    label_src_dir='data2/train/labels_complete_poly',
     img_dst_dir='data2/train/images',
     label_dst_dir='data2/train/labels'
 )
@@ -35,7 +35,7 @@ copy_all(
 # Val completo
 copy_all(
     img_src_dir='data/val',
-    label_src_dir='data2/val/labels_complete',
+    label_src_dir='data2/val/labels_complete_poly',
     img_dst_dir='data2/val/images',
     label_dst_dir='data2/val/labels'
 )
